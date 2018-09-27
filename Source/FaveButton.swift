@@ -94,10 +94,11 @@ open class FaveButton: UIButton {
         applyInit()
     }
     
-    public func setSelected(selected: Bool, animated: Bool) {
-        guard selected != self.isSelected else {
+    public func setSelected(selected: Bool, animated: Bool, force: Bool = false) {
+        guard selected != self.isSelected || force == true else {
             return
         }
+
         guard animated == false else {
             self.isSelected = selected
             return
