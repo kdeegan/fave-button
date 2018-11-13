@@ -51,10 +51,11 @@ class FaveIcon: UIView {
 // MARK: create
 extension FaveIcon{
     
-    class func createFaveIcon(_ onView: UIView, icon: UIImage, color: UIColor) -> FaveIcon{
+    class func createFaveIcon(_ onView: UIView, icon: UIImage, color: UIColor, isHidden: Bool) -> FaveIcon {
         let faveIcon = Init(FaveIcon(region:onView.bounds, icon: icon, color: color)){
             $0.translatesAutoresizingMaskIntoConstraints = false
             $0.backgroundColor                           = .clear
+            $0.alpha = isHidden ? 0 : 1
         }
         onView.addSubview(faveIcon)
         
@@ -66,7 +67,7 @@ extension FaveIcon{
     }
     
     func applyInit(){
-        let maskRegion  = contentRegion.size.scaleBy(0.7).rectCentered(at: contentRegion.center)
+        let maskRegion  = contentRegion.size.scaleBy(0.9).rectCentered(at: contentRegion.center)
         let shapeOrigin = CGPoint(x: -contentRegion.center.x, y: -contentRegion.center.y)
         
         
@@ -99,7 +100,7 @@ extension FaveIcon{
         
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-            iconLayer.fillColor = fillColor.cgColor
+        iconLayer.fillColor = fillColor.cgColor
         CATransaction.commit()
         
         let selectedDelay = isSelected ? delay : 0
@@ -127,7 +128,44 @@ extension FaveIcon{
         iconMask.add(scaleAnimation, forKey: nil)
     }
     
+    func animateShow(fillColor: UIColor, duration: Double = 0.5, delay: Double = 0) {
+        let animate = duration > 0.0
+        
+        if nil == tweenValues && animate {
+            tweenValues = generateTweenValues(from: 0, to: 1.0, duration: CGFloat(duration))
+        }
+        
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        iconLayer.fillColor = fillColor.cgColor
+        CATransaction.commit()
+        
+        let selectedDelay = delay
+        
+        self.alpha = 0
+        UIView.animate(
+            withDuration: 0,
+            delay: selectedDelay,
+            options: .curveLinear,
+            animations: {
+                self.alpha = 1
+        }, completion: nil)
+        
+        guard animate else {
+            return
+        }
+        
+        let scaleAnimation = Init(CAKeyframeAnimation(keyPath: "transform.scale")){
+            $0.values    = tweenValues!
+            $0.duration  = duration
+            $0.beginTime = CACurrentMediaTime()+selectedDelay
+        }
+        iconMask.add(scaleAnimation, forKey: nil)
+    }
     
+    func animateHide(fillColor: UIColor, duration: Double = 0.5, delay: Double = 0) {
+        self.alpha = 0
+    }
     
     func generateTweenValues(from: CGFloat, to: CGFloat, duration: CGFloat) -> [CGFloat]{
         var values         = [CGFloat]()

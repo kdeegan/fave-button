@@ -56,6 +56,13 @@ open class FaveButton: UIButton {
     @IBInspectable open var dotSecondColor: UIColor  = UIColor(red: 247/255, green: 188/255, blue: 48/255,  alpha: 1)
     @IBInspectable open var circleFromColor: UIColor = UIColor(red: 221/255, green: 70/255,  blue: 136/255, alpha: 1)
     @IBInspectable open var circleToColor: UIColor   = UIColor(red: 205/255, green: 143/255, blue: 246/255, alpha: 1)
+    @IBInspectable open var selectedImage: UIImage? = nil {
+        didSet {
+            if let selectedImage = selectedImage {
+                faveIconSelected = createFaveIcon(selectedImage, true)
+            }
+        }
+    }
     
     @IBOutlet open weak var delegate: AnyObject?
     
@@ -63,6 +70,7 @@ open class FaveButton: UIButton {
     
     fileprivate var faveIconImage:UIImage?
     fileprivate var faveIcon: FaveIcon!
+    fileprivate var faveIconSelected: FaveIcon? = nil
     fileprivate var animationsEnabled = true
     
     override open var isSelected: Bool {
@@ -136,8 +144,8 @@ extension FaveButton{
     }
     
     
-    fileprivate func createFaveIcon(_ faveIconImage: UIImage) -> FaveIcon{
-        return FaveIcon.createFaveIcon(self, icon: faveIconImage,color: normalColor)
+    fileprivate func createFaveIcon(_ faveIconImage: UIImage, _ isHidden: Bool = false) -> FaveIcon {
+        return FaveIcon.createFaveIcon(self, icon: faveIconImage, color: normalColor, isHidden: isHidden)
     }
     
     
@@ -164,7 +172,7 @@ extension FaveButton{
 // MARK: utils
 
 extension FaveButton{
-    fileprivate func dotColors(at index: Int) -> DotColors{
+    fileprivate func dotColors(at index: Int) -> DotColors {
         if case let delegate as FaveButtonDelegate = delegate , nil != delegate.faveButtonDotColors(self){
             let colors     = delegate.faveButtonDotColors(self)!
             let colorIndex = 0..<colors.count ~= index ? index : index % colors.count
@@ -182,7 +190,7 @@ extension FaveButton{
         self.addTarget(self, action: #selector(toggle(_:)), for: .touchUpInside)
     }
     
-    @objc func toggle(_ sender: FaveButton){
+    @objc func toggle(_ sender: FaveButton) {
         sender.isSelected = !sender.isSelected
         
         guard case let delegate as FaveButtonDelegate = self.delegate else{
@@ -206,8 +214,20 @@ extension FaveButton{
 extension FaveButton {
     fileprivate func animateSelect(_ isSelected: Bool, duration: Double){
         let color  = isSelected ? selectedColor : normalColor
-        
-        faveIcon.animateSelect(isSelected, fillColor: color, duration: duration, delay: duration > 0.0 ? Const.faveIconShowDelay : 0.0)
+
+        if let faveIconSelected = faveIconSelected {
+            if isSelected {
+                faveIcon.animateHide(fillColor: color, duration: duration, delay: duration > 0.0 ? Const.faveIconShowDelay : 0.0)
+                faveIconSelected.animateShow(fillColor: color, duration: duration, delay: duration > 0.0 ? Const.faveIconShowDelay : 0.0)
+            }
+            else {
+                faveIconSelected.animateHide(fillColor: color, duration: duration, delay: duration > 0.0 ? Const.faveIconShowDelay : 0.0)
+                faveIcon.animateShow(fillColor: color, duration: duration, delay: duration > 0.0 ? Const.faveIconShowDelay : 0.0)
+            }
+        }
+        else {
+            faveIcon.animateSelect(isSelected, fillColor: color, duration: duration, delay: duration > 0.0 ? Const.faveIconShowDelay : 0.0)
+        }
         
         guard duration > 0.0 else {
             return
